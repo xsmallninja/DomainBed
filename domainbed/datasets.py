@@ -9,8 +9,8 @@ from torch.utils.data import TensorDataset, Subset
 from torchvision.datasets import MNIST, ImageFolder
 from torchvision.transforms.functional import rotate
 
-from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
-from wilds.datasets.fmow_dataset import FMoWDataset
+# from wilds.datasets.camelyon17_dataset import Camelyon17Dataset
+# from wilds.datasets.fmow_dataset import FMoWDataset
 
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -30,7 +30,9 @@ DATASETS = [
     "SVIRO",
     # WILDS datasets
     "WILDSCamelyon",
-    "WILDSFMoW"
+    "WILDSFMoW",
+    # Chest X-Ray datasets
+    "CXR",
 ]
 
 def get_dataset_class(dataset_name):
@@ -79,6 +81,54 @@ class Debug28(Debug):
 class Debug224(Debug):
     INPUT_SHAPE = (3, 224, 224)
     ENVIRONMENTS = ['0', '1', '2']
+
+
+class CXR(MultipleDomainDataset):
+    def __init__(self, root, test_env, hparams):
+        ENVIRONMENTS = ['mimic', 'chexpert']
+        super().__init__()
+
+        real_mimic_train_path = '/home/nschiou2/CXR/data/train/mimic'
+        real_chexpert_train_path = '/home/nschiou2/CXR/data/train/chexpert'
+        real_mimic_test_path = '/home/nschiou2/CXR/data/test/mimic'
+        real_chexpert_test_path = '/home/nschiou2/CXR/data/test/chexpert'
+
+        transform = {
+            'train':
+            transforms.Compose([
+                transforms.Resize((256, 256)),
+                transforms.RandomResizedCrop((224), scale=(0.9, 1)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5),
+                                    inplace=True),
+                ]),
+            'test':
+            transforms.Compose([
+                transforms.Resize((224, 224)),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5),
+                                    inplace=True),
+                ])
+        }
+
+        source_dataset_train = ImageFolder(real_chexpert_train_path,
+                                           transform=transform['train'])
+        source_dataset_test = ImageFolder(real_chexpert_test_path,
+                                          transform=transform['test'])
+        source_dataset = torch.utils.data.ConcatDataset([source_dataset_train,
+                                                         source_dataset_test])
+        target_dataset_train = ImageFolder(real_mimic_train_path,
+                                           transform=transform['train'])
+        target_dataset_test = ImageFolder(real_mimic_test_path,
+                                          transform=transform['test'])
+        target_dataset = torch.utils.data.ConcatDataset([target_dataset_train,
+                                                         target_dataset_test])
+
+        self.datasets = [target_dataset, source_dataset]
+
+        self.input_shape = (3, 224, 224)
+        self.num_classes = 2
 
 
 class MultipleEnvironmentMNIST(MultipleDomainDataset):
@@ -338,20 +388,20 @@ class WILDSDataset(MultipleDomainDataset):
         return sorted(list(set(metadata_vals.view(-1).tolist())))
 
 
-class WILDSCamelyon(WILDSDataset):
-    ENVIRONMENTS = [ "hospital_0", "hospital_1", "hospital_2", "hospital_3",
-            "hospital_4"]
-    def __init__(self, root, test_envs, hparams):
-        dataset = Camelyon17Dataset(root_dir=root)
-        super().__init__(
-            dataset, "hospital", test_envs, hparams['data_augmentation'], hparams)
+# class WILDSCamelyon(WILDSDataset):
+#     ENVIRONMENTS = [ "hospital_0", "hospital_1", "hospital_2", "hospital_3",
+#             "hospital_4"]
+#     def __init__(self, root, test_envs, hparams):
+#         dataset = Camelyon17Dataset(root_dir=root)
+#         super().__init__(
+#             dataset, "hospital", test_envs, hparams['data_augmentation'], hparams)
 
 
-class WILDSFMoW(WILDSDataset):
-    ENVIRONMENTS = [ "region_0", "region_1", "region_2", "region_3",
-            "region_4", "region_5"]
-    def __init__(self, root, test_envs, hparams):
-        dataset = FMoWDataset(root_dir=root)
-        super().__init__(
-            dataset, "region", test_envs, hparams['data_augmentation'], hparams)
+# class WILDSFMoW(WILDSDataset):
+#     ENVIRONMENTS = [ "region_0", "region_1", "region_2", "region_3",
+#             "region_4", "region_5"]
+#     def __init__(self, root, test_envs, hparams):
+#         dataset = FMoWDataset(root_dir=root)
+#         super().__init__(
+#             dataset, "region", test_envs, hparams['data_augmentation'], hparams)
 
