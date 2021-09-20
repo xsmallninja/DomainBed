@@ -246,12 +246,27 @@ class AbstractDANN(Algorithm):
             disc_input = all_z + self.class_embeddings(all_y)
         else:
             disc_input = all_z
-        disc_out = self.discriminator(disc_input)
         disc_labels = torch.cat([
             torch.full((x.shape[0], ), i, dtype=torch.int64, device=device)
             for i, (x, y) in enumerate(minibatches)
         ])
 
+        if unlabeled is not None:
+            uda_x = torch.cat([x for x in unlabeled])
+            uda_z = self.featurizer(uda_x)
+            if self.conditional:
+                temp = uda_z + self.class_embeddings(all_y)
+            else:
+                temp = uda_z
+                disc_input = torch.cat([disc_input, temp], axis=0)
+                temp_labels = torch.cat([
+                    torch.full((x.shape[0], ), i + torch.max(disc_labels) + 1,
+                    dtype=torch.int64, device=device)
+                    for i, x  in enumerate(unlabeled)
+                ])
+                disc_labels = torch.cat([disc_labels, temp_labels], axis=0)
+        
+        disc_out = self.discriminator(disc_input)
         if self.class_balance:
             y_counts = F.one_hot(all_y).sum(dim=0)
             weights = 1. / (y_counts[all_y] * y_counts.shape[0]).float()
