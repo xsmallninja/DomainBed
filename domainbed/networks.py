@@ -73,8 +73,11 @@ class ResNet(torch.nn.Module):
         if hparams['resnet18']:
             self.network = torchvision.models.resnet18(pretrained=True)
             self.n_outputs = 512
-        else:
+        elif hparams['resnet50']:
             self.network = torchvision.models.resnet50(pretrained=True)
+            self.n_outputs = 2048
+        elif hparams['resnet152']:
+            self.network = torchvision.models.resnet152(pretrained=True)
             self.n_outputs = 2048
 
         # self.network = remove_batch_norm_from_resnet(self.network)

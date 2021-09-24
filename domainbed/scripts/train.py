@@ -91,9 +91,10 @@ if __name__ == "__main__":
     torch.backends.cudnn.benchmark = False
 
     if torch.cuda.is_available():
-        device = "cuda"
+        device_num = torch.cuda.current_device()
+        device = f'cuda:{device_num}'
     else:
-        device = "cpu"
+        device = 'cpu'
 
     if args.dataset in vars(datasets):
         dataset = vars(datasets)[args.dataset](args.data_dir,
