@@ -3,3 +3,8 @@ domainbed/facebook.py
 
 domainbed/data/*
 train_output/*
+oldy/*
+DANN_uda_3000/*
+DANN_uda_5000/*
+DANN_uda_5000_resnet152/*
+DANN_uda_10000_resnet152/*
