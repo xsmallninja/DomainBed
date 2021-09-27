@@ -29,8 +29,8 @@ def _hparams(algorithm, dataset, random_seed):
 
     _hparam('data_augmentation', True, lambda r: True)
     _hparam('resnet18', False, lambda r: False)
-    _hparam('resnet50', False, lambda r: False)
-    _hparam('resnet152', True, lambda r: False)
+    _hparam('resnet50', True, lambda r: False)
+    _hparam('resnet152', False, lambda r: False)
     _hparam('resnet_dropout', 0., lambda r: r.choice([0., 0.1, 0.5]))
     _hparam('class_balanced', False, lambda r: False)
     # TODO: nonlinear classifiers disabled
@@ -123,7 +123,7 @@ def _hparams(algorithm, dataset, random_seed):
     elif dataset == 'DomainNet':
         _hparam('batch_size', 32, lambda r: int(2**r.uniform(3, 5)))
     elif dataset == 'CXR':
-        _hparam('batch_size', 16, lambda r: 16)
+        _hparam('batch_size', 32, lambda r: 16)
     else:
         _hparam('batch_size', 32, lambda r: int(2**r.uniform(3, 5.5)))
 
